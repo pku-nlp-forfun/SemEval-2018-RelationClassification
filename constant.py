@@ -10,6 +10,8 @@ prediction_path = 'prediction/'
 score_script_path = 'data/semeval2018_task7_scorer-v1.2.pl'
 pickle_path = 'pickle/' # embedding.
 
+embedding_dim = 300
+
 rela2id = {
     'USAGE': 0,
     'TOPIC': 1,

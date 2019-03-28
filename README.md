@@ -145,6 +145,25 @@ For subtasks 1.1 and 1.2 which are usual classification tasks, the following cla
   * macro-average of the F1-measures of every distinct class
   * micro-average of the F1-measures of every distinct class
 
+## Idea
+
+Combine two entity with some relation words to form a sentence. And we use the sentence to classify whether it belong to this class.
+
+Example:
+
+```txt
+USAGE(H01-1001.9,H01-1001.10)
+<entity id="H01-1001.9">oral communication</entity>
+<entity id="H01-1001.10">indices</entity>
+
+USAGE(oral communication, indices) =>
+
+oral communication used by indices
+oral communication used for indices
+oral communication applied to indices
+oral communication performed on indices
+```
+
 ## Trouble Shooting
 
 ### Execute shell command and get stdout

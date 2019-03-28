@@ -29,8 +29,9 @@ class Paper:
         return "Paper %s\n\nTitle: %s\n\nAbstract:\n\n%s\n\nEntities:\n\n%s" % (self.id, self.title, self.abstract, entity)
 
 
+# i.e. Training data
 def loadPaper(filename):
-    papers = []  # list of Paper object
+    papers = {}  # paper id: Paper object
     with open(filename, 'r') as text_raw:
         raw_xml = text_raw.read()
 
@@ -59,11 +60,12 @@ def loadPaper(filename):
 
         paper.entity_id = entity_id
         paper.entity_str = entity_str
-        papers.append(paper)
+        papers[text["id"]] = paper
 
     return papers
 
 
+# i.e. Training label
 def loadRelation(filename):
     entity_pair_relation = {}  # (entity1, entity2): relation
     with open(filename, 'r') as relation_raw:
@@ -77,6 +79,32 @@ def loadRelation(filename):
         entity_pair_relation[(entity1, entity2)] = relation_encode
 
     return entity_pair_relation
+
+
+# i.e. Test data
+def loadTestEntities(filename):
+    entity_pair = []
+    with open(filename, 'r') as entities_raw:
+        entity_lines = entities_raw.readlines()
+    
+    for string in entity_lines:
+        rest_of_str = string.split('(', 1)[1]
+        entity1, entity2 = rest_of_str.split(',')[:2]
+        if entity2.endswith(')\n'):
+            entity2 = entity2[:-2]
+        
+        entity_pair.append((entity1, entity2))
+    
+    return entity_pair
+
+
+def formResult(test_data: list, pred_label: list, filename: str='prediction.txt'):
+    result = []
+    for (entity1, entity2), label in zip(test_data, pred_label):
+        result.append('%s(%s,%s)' % (id2rela[label], entity1, entity2))
+
+    with open(os.path.join(prediction_path, filename), 'w') as f:
+            f.write('\n'.join(result))
 
 
 def scorerEval(pred_file, key_file):
@@ -122,7 +150,7 @@ def fastF1(result, predict, trueValue):
 
 
 def scoreSelf(predict):
-    with open('%skeys.test.1.1.txt' % data_path, 'r') as f:
+    with open('%skeys.test.1.1.txt' % test_data_path, 'r') as f:
         result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
     p, r = 0, 0
     for ii in range(6):
