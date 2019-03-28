@@ -50,9 +50,13 @@ def sentencesToEmbedding(sentences: list, embedding_dict: dict):
             try:
                 prod *= embedding_dict[string]
             except KeyError:
-                # Out of vocabulary
-                prod *= embedding_dict['UNK']
-    return prod
+                try:
+                    # Look for lower case first
+                    prod *= embedding_dict[string.lower()]
+                except KeyError:
+                    # Out of vocabulary
+                    prod *= embedding_dict['UNK']
+    return prod/np.linalg.norm(prod, ord=2) # average
 
 
 def stringListToEmbedding(string_list: list, embedding_dict: dict):

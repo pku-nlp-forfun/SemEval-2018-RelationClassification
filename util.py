@@ -98,9 +98,9 @@ def loadTestEntities(filename):
     return entity_pair
 
 
-def formResult(test_data: list, pred_label: list, filename: str='prediction.txt'):
+def formResult(test_entity: list, pred_label: list, filename: str='prediction.txt'):
     result = []
-    for (entity1, entity2), label in zip(test_data, pred_label):
+    for (entity1, entity2), label in zip(test_entity, pred_label):
         result.append('%s(%s,%s)' % (id2rela[label], entity1, entity2))
 
     with open(os.path.join(prediction_path, filename), 'w') as f:

@@ -59,6 +59,15 @@ Relation instances are to be classified into one of the following relations: USA
     X is compared to Y (e.g. two systems, two feature sets or two results)
     ```
 
+The counts for each relation:
+
+* `USAGE`: 483
+* `TOPIC`: 18
+* `RESULT`: 72
+* `PART_WHOLE`: 234
+* `MODEL-FEATURE`: 326
+* `COMPARE`: 95
+
 ### Subtask 1: Relation classification
 
 > For each subtask, training and test data include abstracts of papers from the ACL Anthology Corpus with pre-annotated entities that represent concepts. Two types of tasks are proposed:
@@ -95,7 +104,6 @@ Relation instances in the annotated text (provided for test data):
 (H01-1041.14,H01-1041.15,REVERSE)
 ```
 
-
 Submission format with predictions:
 
 ```txt
@@ -112,7 +120,7 @@ The task is identical to 1.1., but the entities are annotated automatically and 
 
 Example (annotated text):
 
-```
+```txt
 <abstract>
 
 This <entity id="L08-1203.8">paper</entity> introduces a new <entity id="L08-1203.9">architecture</entity> that aims at combining molecular <entity id="L08-1203.10">biology</entity> <entity id="L08-1203.11">data</entity> with <entity id="L08-1203.12">information</entity> automatically <entity id="L08-1203.13">extracted</entity> from relevant <entity id="L08-1203.14">scientific literature</entity>
@@ -122,7 +130,7 @@ This <entity id="L08-1203.8">paper</entity> introduces a new <entity id="L08-120
 
 Relation instances in the annotated text (provided for test data):
 
-```
+```txt
 (L08-1203.8,L08-1203.9)
 
 (L08-1203.12,L08-1203.14)
@@ -130,7 +138,7 @@ Relation instances in the annotated text (provided for test data):
 
 Submission format for predictions:
 
-```
+```txt
 TOPIC(L08-1203.8,L08-1203.9)
 
 PART_WHOLE(L08-1203.12,L08-1203.14)
