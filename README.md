@@ -145,6 +145,35 @@ For subtasks 1.1 and 1.2 which are usual classification tasks, the following cla
   * macro-average of the F1-measures of every distinct class
   * micro-average of the F1-measures of every distinct class
 
+## Trouble Shooting
+
+### Execute shell command and get stdout
+
+```py
+import subprocess
+```
+
+* [Python: How to get stdout after running os.system?](https://stackoverflow.com/questions/18739239/python-how-to-get-stdout-after-running-os-system/45364515)
+
+### XML
+
+* [How do I parse XML in Python?](https://stackoverflow.com/questions/1912434/how-do-i-parse-xml-in-python)
+* [How to extract the text between some anchor tags?](https://stackoverflow.com/questions/13247479/how-to-extract-the-text-between-some-anchor-tags)
+* [Remove a tag using BeautifulSoup but keep its contents](https://stackoverflow.com/questions/1765848/remove-a-tag-using-beautifulsoup-but-keep-its-contents)
+
+### Random stuff
+
+* [How do I remove a substring from the end of a string in Python?](https://stackoverflow.com/questions/1038824/how-do-i-remove-a-substring-from-the-end-of-a-string-in-python)
+
+```py
+import module
+from imp import reload
+
+reload(module) # module updated
+```
+
+* [Difference between __str__ and __repr__?](https://stackoverflow.com/questions/1436703/difference-between-str-and-repr)
+
 ## Links
 
 ### Data
@@ -158,3 +187,5 @@ For subtasks 1.1 and 1.2 which are usual classification tasks, the following cla
 ### Paper
 
 * [SemEval-2018 Task 7: Semantic Relation Extraction and Classification in Scientific Papers](https://aclweb.org/anthology/S18-1111)
+* [LightRel](https://arxiv.org/pdf/1804.08426.pdf)
+  * [github](https://github.com/trenslow/LightRel)
