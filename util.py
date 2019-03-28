@@ -1,10 +1,17 @@
-import subprocess
+import numpy as np
+import os
+import pickle
 import re
 import random
-from bs4 import BeautifulSoup, NavigableString
+import subprocess
+import time
 
-from numba import jit
 from constant import *
+from bs4 import BeautifulSoup, NavigableString
+from numba import jit
+
+
+start = []
 
 
 class Paper:
@@ -128,14 +135,50 @@ def scoreSelf(predict):
     print(p, r, f1)
 
 
+def begin_time():
+    """
+    multi-version time manage
+    """
+    global start
+    start.append(time.time())
+    return len(start) - 1
+
+
+def end_time(version):
+    termSpend = time.time() - start[version]
+    print(str(termSpend)[0:5])
+
+
+def dump_bigger(data, output_file):
+    """
+    pickle.dump big file which size more than 4GB
+    """
+    max_bytes = 2**31 - 1
+    bytes_out = pickle.dumps(data, protocol=4)
+    with open(output_file, 'wb') as f_out:
+        for idx in range(0, len(bytes_out), max_bytes):
+            f_out.write(bytes_out[idx:idx + max_bytes])
+
+
+def load_bigger(input_file):
+    """
+    pickle.load big file which size more than 4GB
+    """
+    max_bytes = 2**31 - 1
+    bytes_in = bytearray(0)
+    input_size = os.path.getsize(input_file)
+    with open(input_file, 'rb') as f_in:
+        for _ in range(0, input_size, max_bytes):
+            bytes_in += f_in.read(max_bytes)
+    return pickle.loads(bytes_in)
+
+
 # Test utilities
 if __name__ == "__main__":
 
-    P, R, F1 = getMacroResult('%skeys.test.1.1.txt' % test_data_path,
-                              '%skeys.test.1.1.txt' % test_data_path)
+    P, R, F1 = getMacroResult(key_path(), key_path())
     print(P, R, F1)
-    P, R, F1 = getMacroResult('%s1.1random.txt' % prediction_path,
-                              '%skeys.test.1.1.txt' % test_data_path)
+    P, R, F1 = getMacroResult('%s1.1random.txt' % prediction_path, key_path())
     print(P, R, F1)
 
     papers = loadPaper('%s1.1.text.xml' % train_data_path)
