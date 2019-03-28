@@ -1,0 +1,12 @@
+自然语言处理高级专题：第一次作业
+
+任务：关系分类，来源于“SemEval-2018 task 7 Semantic Relation Extraction and Classification in Scientific Papers”
+任务说明的网址为：  https://competitions.codalab.org/competitions/17422#learn_the_details-overview
+具体任务：Subtask 1: Relation classification
+本压缩包内有训练数据，测试数据（包括答案），评测工具。
+
+请按2人一组
+要求：
+1）使用2种或2种以上的方法（模型）
+2）4月3日各组在课堂上报告，每组报告时间8分钟（包括：问题分析，你的方法，实验结果，与已有方法结果的比较）
+3）4月7日提交Word文档的报告：按照一般科技论文的格式：引言，相关工作，模型与框架，实验与结果（包括实验数据介绍，模型的训练与超参数设置、实验结果以及与其模型的结果比较分析），结论与今后的改进。
