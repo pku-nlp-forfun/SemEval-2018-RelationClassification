@@ -153,7 +153,28 @@ For subtasks 1.1 and 1.2 which are usual classification tasks, the following cla
   * macro-average of the F1-measures of every distinct class
   * micro-average of the F1-measures of every distinct class
 
-## Idea
+## Result
+
+### Using Traditional ML Method
+
+#### Procedure
+
+1. Load dataset
+   1. Load the *relations* into a hash map of `(entity 1, entity 2) -> relation`
+   2. Load the *text* into a Paper class object
+      * paper id
+      * title
+      * abstract (plain text)
+      * entity id and text
+2. Sentence embedding => Get the training feature with label
+3. Training model
+   * SVM
+   * Logistic Regression
+4. Test the result
+   * Using the SemEval 2018 task 7 scorer
+   * Calculate by ourself (5-fold cross validation)
+
+#### The Idea of sentence embedding
 
 Combine two entity with some relation words to form a sentence. And we use the sentence to classify whether it belong to this class.
 
@@ -170,6 +191,76 @@ oral communication used by indices
 oral communication used for indices
 oral communication applied to indices
 oral communication performed on indices
+```
+
+We multiply each words' embedding and then normalize it. (or the value of result will be relevant to the sentence length)
+
+But the result is not quite ideal.
+
+### Using Pure Embedding Model
+
+#### Another way of sentence embedding
+
+Calculate three parts of embedding. `entity 1`, `relationship`, and `entity 2`.
+
+> And two of them, doing dot product. Then we'll get 2 numbers. And use them to form the result.
+
+### Using LightRel as Baseline - [Forked Project](https://github.com/pku-nlp-forfun/LightRel)
+
+* LightRel trained the dictionary for SemEval 2010 Task 8 and reused it for SemEval 2010 Task 7
+
+#### Addition library used
+
+* [liblinear](https://www.csie.ntu.edu.tw/~cjlin/liblinear/)
+* [ast](https://docs.python.org/3/library/ast.html) - Abstract Syntax Trees
+* [unicodedata](https://docs.python.org/3/library/unicodedata.html)
+
+#### Conclusion
+
+The model used by LightRel is not complicated. The performance is depend more on features (embedding).
+
+### The performance of random
+
+```sh
+python3 random_test.py
+```
+
+```txt
+<<< RELATION EXTRACTION EVALUATION >>>
+
+Precision = 355/355 = 100.00%
+Recall = 355/355 = 100.00%
+F1 = 100.00%
+
+<<< The official score for the extraction scenario is F1 = 100.00% >>>
+
+
+<<< RELATION CLASSIFICATION EVALUATION >>>:
+
+Number of instances in submission: 355
+Number of instances in submission missing from gold standard: 0
+Number of instances in gold standard:  355
+Number of instances in gold standard missing from submission:    0
+
+Coverage (predictions for a correctly extracted instance with correct directionality) = 355/355 = 100.00%
+
+Results for the individual relations:
+                  COMPARE :    P =    7/  71 =   9.86%     R =    7/  21 =  33.33%     F1 =  15.22%
+            MODEL-FEATURE :    P =   13/  57 =  22.81%     R =   13/  66 =  19.70%     F1 =  21.14%
+               PART_WHOLE :    P =    5/  54 =   9.26%     R =    5/  70 =   7.14%     F1 =   8.06%
+                   RESULT :    P =    6/  60 =  10.00%     R =    6/  20 =  30.00%     F1 =  15.00%
+                    TOPIC :    P =    0/  57 =   0.00%     R =    0/   3 =   0.00%     F1 =   0.00%
+                    USAGE :    P =   26/  56 =  46.43%     R =   26/ 175 =  14.86%     F1 =  22.51%
+
+Micro-averaged result :
+P =   57/ 355 =  16.06%     R =   57/ 355 =  16.06%     F1 =  16.06%
+
+Macro-averaged result :
+P =  16.39%     R =  17.51%     F1 =  16.93%
+
+
+
+<<< The official score for the classification scenario is macro-averaged F1 = 16.93% >>>
 ```
 
 ## Trouble Shooting

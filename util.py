@@ -149,9 +149,10 @@ def fastF1(result, predict, trueValue):
     return P, R, f1
 
 
-def scoreSelf(predict):
-    with open('%skeys.test.1.1.txt' % test_data_path, 'r') as f:
-        result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
+def scoreSelf(predict, result=None):
+    if result is None:
+        with open('%skeys.test.1.1.txt' % test_data_path, 'r') as f:
+            result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
     p, r = 0, 0
     for ii in range(6):
         tp, tr, _ = fastF1(result, predict, ii)

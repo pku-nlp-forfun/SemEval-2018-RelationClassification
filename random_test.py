@@ -22,6 +22,8 @@ def load_test():
         f.write(''.join(result))
     print(getMacroResult('%s1.1random.txt' % prediction_path,
                          '%skeys.test.1.1.txt' % test_data_path))
+    print(scorerEval('%s1.1random.txt' % prediction_path,
+                     '%skeys.test.1.1.txt' % test_data_path))
 
     scoreSelf(predict)
 
