@@ -43,8 +43,11 @@ The Subtask 1
     - [JSON](#json)
     - [#include <malloc.h> not found in OSX](#include-malloch-not-found-in-osx)
     - [Python Type hint](#python-type-hint)
+    - [Get BERT word embedding](#get-bert-word-embedding)
     - [Random stuff](#random-stuff)
+  - [TODO](#todo)
   - [Links](#links)
+    - [TextCNN](#textcnn)
     - [Data](#data)
     - [Paper](#paper)
 
@@ -108,6 +111,15 @@ The counts for each relation:
 - `PART_WHOLE`: 234
 - `MODEL-FEATURE`: 326
 - `COMPARE`: 95
+
+In test set:
+
+- `USAGE`: 175
+- `TOPIC`: 3
+- `RESULT`: 20
+- `PART_WHOLE`: 70
+- `MODEL-FEATURE`: 66
+- `COMPARE`: 21
 
 ### Subtask 1: Relation classification
 
@@ -419,18 +431,85 @@ cd LightRel/embedding
 bash trainFastText.sh
 ```
 
-Performance
+**Performance**:
 
-| Embedding | Model | Data                            | F1 Score(%) |
-| --------- | ----- | ------------------------------- | ----------- |
-| word2vec  | LR    | preTrain model basic on dblp v5 | 50.71       |
-| word2vec  | LR    | ACM v9 + bdlp v10               | 43.9        |
-| word2vec  | LR    | bdlp v5                         | 50.51       |
-| word2vec  | LR    | bdlp v10                        | 50.95       |
+LibLinear (Version 2.30) LR: flods=5, cost=0.05, epoch=0.1
+
+```sh
+cd LightRel
+bash lightRel.sh 5
+```
+
+| Embedding | Model        | Data              | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| --------- | ------------ | ----------------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| word2vec  | LibLinear LR | preTrain dblp v5  | 44.61   | 45.2   | 44.05  | 50.79        | 55.11   | 47.37   | 73.32 | 0.00  | 56.87  | 47.4       | 57.52         | 59.82   |
+| word2vec  | LibLinear LR | ACM v9 + bdlp v10 | 47.24   | 48.04  | 46.46  | 49.45        | 52.69   | 46.83   | 72.31 | 0.00  | 58.50  | 48.11      | 56.60         | 53.67   |
+| word2vec  | LibLinear LR | bdlp v5           | 46.27   | 47.76  | 44.87  | 50.08        | 54.32   | 46.73   | 72.42 | 0.00  | 53.95  | 48.40      | 56.84         | 58.79   |
+| word2vec  | LibLinear LR | bdlp v10          | 47.28   | 47.28  | 47.27  | 50.28        | 53.53   | 47.62   | 73.46 | 0.00  | 59.01  | 49.54      | 57.34         | 54.90   |
+| fastText  | LibLinear LR | bdlp v5           | 49.12   | 63.54  | 40.03  | 49.3         | 61.64   | 41.2    | 72.08 | 0.00  | 47.31  | 46.27      | 59.88         | 39.12   |
+| fastText  | LibLinear LR | acm v9 + bdlp v10 | 50.21   | 64.11  | 41.27  | 50.73        | 62.45   | 42.79   | 72.35 | 0.00  | 48.74  | 48.97      | 60.93         | 45.76   |
+| fastText  | LibLinear LR | bdlp v10          | 50.75   | 63.85  | 42.12  | 49.72        | 61.29   | 41.93   | 72.33 | 0.00  | 49.84  | 46.00      | 60.80         | 41.14   |
+| bert      | LibLinear LR | acm v9 + bdlp v10 | 26.02   | 26.02  | 26.02  | 32.82        | 37.23   | 29.74   | 67.18 | 0.00  | 0.00   | 41.39      | 55.09         | 6.92    |
+
+> We found that using fasText embedding on bdlp v10 has the best performance, so we do the further experience on other models
+
+```sh
+cd LightRel
+python3 loadFeatureAndTrain.py
+```
+
+scikit-learn v0.20.3
+
+| Embedding | Model        | Data     | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| --------- | ------------ | -------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| fastText  | LinearSVC    | bdlp v10 | 51.47   | 51.43  | 51.45  | 50.24        | 53.37   | 47.77   | 70.99 | 0.00  | 55.84  | 47.09      | 58.10         | 61.47   |
+| fastText  | Sklearn LR   | bdlp v10 | 56.32   | 49.64  | 52.77  | 53.09        | 58.03   | 49.06   | 74.70 | 0.00  | 60.06  | 50.35      | 59.79         | 62.96   |
+| fastText  | DecisionTree | bdlp v10 | 35.37   | 38.03  | 36.65  | 39.26        | 38.29   | 40.54   | 61.21 | 6.67  | 34.17  | 38.69      | 48.24         | 38.38   |
 
 #### Add more feature
 
-> TODO
+First, because there are only 18 training sample for TOPIC in training set. We currently get 0 on F1-score.
+
+We list the relation of TOPIC in training set as the following.
+
+```py
+from util import loadRelation
+from constant import rela2id
+relations = loadRelation('data/1.1.relations.txt')
+topics_entities = [k for k, v in a.items() if v == rela2id['TOPIC']]
+
+# [('P01-1009.1', 'P01-1009.3'),
+# ('N03-1026.14', 'N03-1026.15'),
+# ('N04-1024.18', 'N04-1024.19'),
+# ('H01-1055.7', 'H01-1055.9'),
+# ('E06-1004.1', 'E06-1004.2'),
+# ('C80-1073.4', 'C80-1073.5'),
+# ('A92-1023.4', 'A92-1023.5'),
+# ('A92-1023.7', 'A92-1023.8'),
+# ('P06-1053.1', 'P06-1053.2'),
+# ('N06-1007.7', 'N06-1007.8'),
+# ('E89-1016.1', 'E89-1016.3'),
+# ('E93-1013.1', 'E93-1013.2'),
+# ('E95-1036.11', 'E95-1036.12'),
+# ('H93-1076.3', 'H93-1076.4'),
+# ('A97-1028.11', 'A97-1028.12'),
+# ('P99-1058.11', 'P99-1058.12'),
+# ('X96-1041.6', 'X96-1041.7'),
+# ('J87-3001.16', 'J87-3001.17')]
+```
+
+1. ('P01-1009.1', 'P01-1009.3')
+   * Title: Alternative Phrases and Natural Language Information Retrieval
+   * `formal analysis` for a large class of words called `alternative markers`
+2. ('N03-1026.14', 'N03-1026.15')
+   * Title: Statistical Sentence Condensation using Ambiguity Packing and Stochastic Disambiguation Methods for Lexical-Functional Grammar
+   * An `experimental evaluation` of `summarization`
+3. ('N04-1024.18', 'N04-1024.19')
+   * Title: Evaluating Multiple Aspects of Coherence in Student Essays
+   * `Intra-sentential quality` is evaluated with `rule-based heuristics`
+4. ('H01-1055.7', 'H01-1055.9')
+   * Title: Natural Language Generation in Dialog Systems
+   * `system response` to users has been extensively studied by the `natural language generation community`
 
 ## Using Deep Learning
 
@@ -514,6 +593,47 @@ import subprocess
 
 - [Stackoverflow - How to annotate types of multiple return values?](https://stackoverflow.com/questions/40181344/how-to-annotate-types-of-multiple-return-values)
 
+### Get BERT word embedding
+
+* [google-research/bert issues - How to get the word embedding after pre-training?](https://github.com/google-research/bert/issues/60)
+  * with variable name `bert/embeddings/word_embeddings`
+* [imgarylai/bert-embedding](https://github.com/imgarylai/bert-embedding)
+* [Stackoverflow - How do I find the variable names and values that are saved in a checkpoint?](https://stackoverflow.com/questions/38218174/how-do-i-find-the-variable-names-and-values-that-are-saved-in-a-checkpoint/41917296)
+  * [tensorflow/tensorflow - inspect_checkpoint.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/inspect_checkpoint.py)
+
+```py
+model_path = '.'
+# Get latest checkpoint
+latest_ckpt = tf.train.latest_checkpoint(model_path)
+```
+
+```py
+# just print
+from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
+
+print_tensors_in_checkpoint_file(latest_ckpt, all_tensors=False, tensor_name='bert/embeddings/word_embeddings')
+```
+
+```py
+# get the embedding tensor
+tensor_name = 'bert/embeddings/word_embeddings'
+file_name = latest_ckpt
+from tensorflow.python import pywrap_tensorflow
+reader = pywrap_tensorflow.NewCheckpointReader(file_name)
+embedding = reader.get_tensor(tensor_name) # np.array (default dimension 768)
+
+# The length should be the same as vocab.txt
+len(embedding) # 30522 (default)
+```
+
+```py
+# combine into embedding file (vocabulary: tensor)
+with open('vocab.txt', 'r') as vocab:
+    words = vocab.readlines()
+
+test = [' '.join([str(combined) for combined in [word.strip(), *embedding[i]]]) for i, word in enumerate(words)]
+```
+
 ### Random stuff
 
 - [How do I remove a substring from the end of a string in Python?](https://stackoverflow.com/questions/1038824/how-do-i-remove-a-substring-from-the-end-of-a-string-in-python)
@@ -527,7 +647,18 @@ reload(module) # module updated
 
 - [Difference between **str** and **repr**?](https://stackoverflow.com/questions/1436703/difference-between-str-and-repr)
 
+- [Finding All The Keys With the Same Value in a Python Dictionary](https://stackoverflow.com/questions/42438808/finding-all-the-keys-with-the-same-value-in-a-python-dictionary)
+
+## TODO
+
+- [ ] feature dimension problem in 5-fold evaluation on version 1.2 dataset
+
 ## Links
+
+### TextCNN
+
+* [brightmart/text_classification](https://github.com/brightmart/text_classification)
+* [DongjunLee/text-cnn-tensorflow](https://github.com/DongjunLee/text-cnn-tensorflow)
 
 ### Data
 

@@ -15,7 +15,7 @@ start = []
 
 
 class Paper:
-    def __init__(self, text_id: str="", title: str="", abstract: str="", entity_id: list=[], entity_str: list=[]):
+    def __init__(self, text_id: str = "", title: str = "", abstract: str = "", entity_id: list = [], entity_str: list = []):
         self.id = text_id
         self.title = title
         self.abstract = abstract
@@ -86,25 +86,25 @@ def loadTestEntities(filename):
     entity_pair = []
     with open(filename, 'r') as entities_raw:
         entity_lines = entities_raw.readlines()
-    
+
     for string in entity_lines:
         rest_of_str = string.split('(', 1)[1]
         entity1, entity2 = rest_of_str.split(',')[:2]
         if entity2.endswith(')\n'):
             entity2 = entity2[:-2]
-        
+
         entity_pair.append((entity1, entity2))
-    
+
     return entity_pair
 
 
-def formResult(test_entity: list, pred_label: list, filename: str='prediction.txt'):
+def formResult(test_entity: list, pred_label: list, filename: str = 'prediction.txt'):
     result = []
     for (entity1, entity2), label in zip(test_entity, pred_label):
         result.append('%s(%s,%s)' % (id2rela[label], entity1, entity2))
 
     with open(os.path.join(prediction_path, filename), 'w') as f:
-            f.write('\n'.join(result))
+        f.write('\n'.join(result))
 
 
 def scorerEval(pred_file, key_file):
@@ -145,13 +145,13 @@ def fastF1(result, predict, trueValue):
     R = trueNum / recallNum if recallNum else 0
     P = trueNum / precisionNum if precisionNum else 0
     f1 = (2 * P * R) / (P + R) if (P + R) else 0
-    print(P, R, f1)
+    print(id2rela[trueValue], P, R, f1)
     return P, R, f1
 
 
 def scoreSelf(predict, result=None):
     if result is None:
-        with open('%skeys.test.1.1.txt' % test_data_path, 'r') as f:
+        with open('%skeys.test.1.1.txt' % data_dir, 'r') as f:
             result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
     p, r = 0, 0
     for ii in range(6):
@@ -161,7 +161,8 @@ def scoreSelf(predict, result=None):
     p /= 6
     r /= 6
     f1 = (2 * p * r) / (p + r) if (p + r) else 0
-    print(p, r, f1)
+    print('Once', p, r, f1)
+    return p, r, f1
 
 
 def begin_time():
