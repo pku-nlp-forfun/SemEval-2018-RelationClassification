@@ -15,10 +15,11 @@ start = []
 
 
 class Paper:
-    def __init__(self, text_id: str = "", title: str = "", abstract: str = "", entity_id: list = [], entity_str: list = []):
+    def __init__(self, text_id: str = "", title: str = "", abstract: str = "", entity_id: list = [], entity_str: list = [], abstract_entity: str = ''):
         self.id = text_id
         self.title = title
         self.abstract = abstract
+        self.abstract_entity = abstract_entity
         self.entity_id = entity_id
         self.entity_str = entity_str
 
@@ -26,7 +27,7 @@ class Paper:
         entity_list = ["%s: %s" % (i, string) for i, string in zip(
             self.entity_id, self.entity_str)]
         entity = "\n".join(entity_list)
-        return "Paper %s\n\nTitle: %s\n\nAbstract:\n\n%s\n\nEntities:\n\n%s" % (self.id, self.title, self.abstract, entity)
+        return "Paper %s\n\nTitle: %s\n\nAbstract:\n\n%s\n\nAbstract_entity:\n\n%s\n\nEntities:\n\n%s" % (self.id, self.title, self.abstract, self.abstract_entity, entity)
 
 
 # i.e. Training data
@@ -41,25 +42,20 @@ def loadPaper(filename):
 
     for text in texts:
         paper = Paper(text_id=text["id"], title=text.title.text)
+        paper.abstract = text.abstract.text.strip()
 
-        abstract = ""
+        abstract_entity = ''
+
         for abstract_item in text.abstract.contents:
             try:
-                abstract += str(abstract_item.text)
+                abstract_entity += str(abstract_item['id'])
             except:
-                abstract += str(abstract_item)
-
-        paper.abstract = abstract
+                abstract_entity += str(abstract_item)
+        paper.abstract_entity = abstract_entity.strip()
 
         entities = text.findAll('entity')
-        entity_id = []
-        entity_str = []
-        for entity in entities:
-            entity_id.append(entity["id"])
-            entity_str.append(entity.text)
-
-        paper.entity_id = entity_id
-        paper.entity_str = entity_str
+        paper.entity_id = [ii['id'] for ii in entities]
+        paper.entity_str = [ii.text for ii in entities]
         papers[text["id"]] = paper
 
     return papers
