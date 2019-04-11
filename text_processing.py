@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 
 from constant import *
-from util import dump_bigger, load_bigger, begin_time, end_time, loadRelation, loadPaper, loadTestEntities
+from util import dump_bigger, load_bigger, begin_time, end_time, loadRelation, loadPaper, loadTestEntities, Paper
 
 origin_embedding = '%sabstracts-dblp-semeval2018.wcs.txt' % pickle_path
 pickle_embedding = '%sdblp_embedding.pkl' % pickle_path
@@ -44,11 +44,24 @@ def combineWithRelationship(entity1_str: str, entity2_str: str, relation_id: int
     return sentences
 
 
-def getMiddleWord(entity1: str, entity2: str, abstract_entity: str):
+def getMiddleWord(entity1: str, entity2: str, papers: Paper):
     ''' find middle word between entity1 and entity2 '''
-    begin_index = abstract_entity.index(entity1)
+    paper1_id, entity1_id = entity1.split('.')
+    paper2_id, entity2_id = entity2.split('.')
+    entity1_str = papers[paper1_id].entity_str[int(entity1_id)-1]
+    entity2_str = papers[paper2_id].entity_str[int(entity2_id)-1]
+    abstract_entity = papers[paper1_id].abstract_entity
+    try:
+        begin_index = abstract_entity.index(entity1)
+    except:
+        print(entity1, entity2, papers[paper1_id])
     end_index = abstract_entity.index(entity2)
-    return abstract_entity[begin_index + len(entity1):end_index].strip()
+    middle_word = abstract_entity[begin_index + len(entity1):end_index].strip()
+    for ii in papers[paper1_id].entity_id:
+        entity_id = int(ii.split('.')[1]) - 1
+        middle_word = middle_word.replace(
+            ii, papers[paper1_id].entity_str[entity_id])
+    return entity1_str, middle_word, entity2_str
 
 
 def sentencesToEmbedding(sentences: list, embedding_dict: dict):
@@ -78,27 +91,20 @@ def stringListToEmbedding(string_list: list, embedding_dict: dict):
 
 
 def getTrainData(embedding_dict={}, no_embedding=False):
-    entity_pair_relations = loadRelation(
-        '%s1.1.relations.txt' % train_data_path)
-    papers = loadPaper('%s1.1.text.xml' % train_data_path)
+    entity_pair_relations = loadRelation(train_data_txt)
+    papers = loadPaper(train_data_xml)
 
     string_list = []
     sentences = []
     label_list = []
 
     for (entity1, entity2), relation in entity_pair_relations.items():
-        paper1_id, entity1_id = entity1.split('.')
-        paper2_id, entity2_id = entity2.split('.')
-        entity1_str = papers[paper1_id].entity_str[int(
-            entity1_id)-1]  # -1 because xml
-        entity2_str = papers[paper2_id].entity_str[int(
-            entity2_id)-1]  # id starts from 0
-        abstract_entity = papers[paper1_id].abstract_entity
-        middle_word = getMiddleWord(entity1, entity2, abstract_entity)
+        entity1_str, middle_word, entity2_str = getMiddleWord(
+            entity1, entity2, papers)
         # Form entity pair to sentences
         string_list.append(combineWithRelationship(
             entity1_str, entity2_str, relation))
-        sentences.append([entity1_str, entity2_str, middle_word, relation])
+        sentences.append([entity1_str, middle_word, entity2_str, relation])
         label_list.append(relation)
     if no_embedding:
         return sentences
@@ -109,22 +115,18 @@ def getTrainData(embedding_dict={}, no_embedding=False):
 
 
 def getTestData(embedding_dict={}, no_embedding=False):
-    entity_pair = loadTestEntities('%s1.1.test.relations.txt' % test_data_path)
-    papers = loadPaper('%s1.1.test.text.xml' % test_data_path)
+    entity_pair = loadTestEntities(test_data_txt)
+    papers = loadPaper(test_data_xml)
+    relation = loadRelation(test_data_key)
 
     string_list = []
     sentences = []
 
     for (entity1, entity2) in entity_pair:
-        paper1_id, entity1_id = entity1.split('.')
-        paper2_id, entity2_id = entity2.split('.')
-        entity1_str = papers[paper1_id].entity_str[int(
-            entity1_id)-1]  # -1 because xml
-        entity2_str = papers[paper2_id].entity_str[int(
-            entity2_id)-1]  # id starts from 0
-        abstract_entity = papers[paper1_id].abstract_entity
-        middle_word = getMiddleWord(entity1, entity2, abstract_entity)
-        sentences.append([entity1_str, entity2_str, middle_word])
+        entity1_str, middle_word, entity2_str = getMiddleWord(
+            entity1, entity2, papers)
+        relation_id = relation[(entity1, entity2)]
+        sentences.append([entity1_str, middle_word, entity2_str, relation_id])
         # Form entity pair to sentences
         string_list.append(f"{entity1_str} {entity2_str}")
     if no_embedding:
