@@ -1,6 +1,6 @@
 # SemEval-2018 Task 7 Subtask 1 - Relation Classification
 
-A PKU course project based on the "SemEval-2018 task 7 Semantic Relation Extraction and Classification in Scientific Papers" dataset.
+A PKU course project based on the "SemEval-2018 task 7 Semantic Relation Extraction and Classification in Scientific Papers" competition.
 
 The Subtask 1
 
@@ -32,6 +32,15 @@ The Subtask 1
     - [Test original performance](#test-original-performance)
     - [Modifications](#modifications)
       - [Try different embedding](#try-different-embedding)
+      - [subTask1.1](#subtask11)
+      - [embedding evaluation](#embedding-evaluation)
+      - [model evaluation](#model-evaluation)
+      - [subTask 1.1 feature work](#subtask-11-feature-work)
+      - [subtask 1.1 imbalance](#subtask-11-imbalance)
+        - [subTask 1.1 pad position](#subtask-11-pad-position)
+      - [subTask 1.2](#subtask-12)
+        - [subTask 1.2 Test](#subtask-12-test)
+      - [subTask 1.2 pad Test](#subtask-12-pad-test)
       - [Add more feature](#add-more-feature)
   - [Using Deep Learning](#using-deep-learning)
     - [Learning from the extracted feature](#learning-from-the-extracted-feature)
@@ -50,6 +59,7 @@ The Subtask 1
     - [TextCNN](#textcnn)
     - [Data](#data)
     - [Paper](#paper)
+    - [Found Other Team Project](#found-other-team-project)
 
 ## Competition
 
@@ -433,6 +443,8 @@ bash trainFastText.sh
 
 **Performance**:
 
+#### subTask1.1
+
 LibLinear (Version 2.30) LR: flods=5, cost=0.05, epoch=0.1
 
 ```sh
@@ -440,20 +452,22 @@ cd LightRel
 bash lightRel.sh 5
 ```
 
-`work for embedding`
+#### embedding evaluation
 
-| Embedding | Model | Data              | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| --------- | ----- | ----------------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| word2vec  | LR    | preTrain dblp v5  | 44.61   | 45.2   | 44.05  | 50.79        | 55.11   | 47.37   | 73.32 | 0.00  | 56.87  | 47.4       | 57.52         | 59.82   |
-| word2vec  | LR    | ACM v9 + bdlp v10 | 47.24   | 48.04  | 46.46  | 49.45        | 52.69   | 46.83   | 72.31 | 0.00  | 58.50  | 48.11      | 56.60         | 53.67   |
-| word2vec  | LR    | bdlp v5           | 46.27   | 47.76  | 44.87  | 50.08        | 54.32   | 46.73   | 72.42 | 0.00  | 53.95  | 48.40      | 56.84         | 58.79   |
-| word2vec  | LR    | bdlp v10          | 47.28   | 47.28  | 47.27  | 50.28        | 53.53   | 47.62   | 73.46 | 0.00  | 59.01  | 49.54      | 57.34         | 54.90   |
-| fastText  | LR    | bdlp v5           | 49.12   | 63.54  | 40.03  | 49.3         | 61.64   | 41.2    | 72.08 | 0.00  | 47.31  | 46.27      | 59.88         | 39.12   |
-| fastText  | LR    | acm v9 + bdlp v10 | 50.21   | 64.11  | 41.27  | 50.73        | 62.45   | 42.79   | 72.35 | 0.00  | 48.74  | 48.97      | 60.93         | 45.76   |
-| fastText  | LR    | bdlp v10          | 50.75   | 63.85  | 42.12  | 49.72        | 61.29   | 41.93   | 72.33 | 0.00  | 49.84  | 46.00      | 60.80         | 41.14   |
-| bert      | LR    | acm v9 + bdlp v10 | 26.02   | 26.02  | 26.02  | 32.82        | 37.23   | 29.74   | 67.18 | 0.00  | 0.00   | 41.39      | 55.09         | 6.92    |
+model = `liblinear LR`, feature = `embedding + cluster + one-hot`
 
-> We found that using fasText embedding on bdlp v10 has the best performance, so we do the further experience on other models
+| Embedding | Data              | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| --------- | ----------------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| word2vec  | preTrain dblp v5  | 44.61   | 45.2   | 44.05  | 50.79        | 55.11   | 47.37   | 73.32 | 0.00  | 56.87  | 47.4       | 57.52         | 59.82   |
+| word2vec  | ACM v9 + dblp v10 | 47.24   | 48.04  | 46.46  | 49.45        | 52.69   | 46.83   | 72.31 | 0.00  | 58.50  | 48.11      | 56.60         | 53.67   |
+| word2vec  | dblp v5           | 46.27   | 47.76  | 44.87  | 50.08        | 54.32   | 46.73   | 72.42 | 0.00  | 53.95  | 48.40      | 56.84         | 58.79   |
+| word2vec  | dblp v10          | 47.28   | 47.28  | 47.27  | 50.28        | 53.53   | 47.62   | 73.46 | 0.00  | 59.01  | 49.54      | 57.34         | 54.90   |
+| fastText  | dblp v5           | 49.12   | 63.54  | 40.03  | 49.3         | 61.64   | 41.2    | 72.08 | 0.00  | 47.31  | 46.27      | 59.88         | 39.12   |
+| fastText  | acm v9 + dblp v10 | 50.21   | 64.11  | 41.27  | 50.73        | 62.45   | 42.79   | 72.35 | 0.00  | 48.74  | 48.97      | 60.93         | 45.76   |
+| fastText  | dblp v10          | 50.75   | 63.85  | 42.12  | 49.72        | 61.29   | 41.93   | 72.33 | 0.00  | 49.84  | 46.00      | 60.80         | 41.14   |
+| bert      | acm v9 + dblp v10 | 26.02   | 26.02  | 26.02  | 32.82        | 37.23   | 29.74   | 67.18 | 0.00  | 0.00   | 41.39      | 55.09         | 6.92    |
+
+> We found that using fasText embedding on dblp v10 has the best performance, so we do the further experience on other models
 
 ```sh
 cd LightRel
@@ -462,61 +476,96 @@ python3 loadFeatureAndTrain.py
 
 scikit-learn v0.20.3
 
-`work for model`
+#### model evaluation
 
-| Embedding | Model        | Data     | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| --------- | ------------ | -------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| fastText  | LinearSVC    | bdlp v10 | 51.47   | 51.43  | 51.45  | 50.24        | 53.37   | 47.77   | 70.99 | 0.00  | 55.84  | 47.09      | 58.10         | 61.47   |
-| fastText  | Sklearn LR   | bdlp v10 | 56.32   | 49.64  | 52.77  | 53.09        | 58.03   | 49.06   | 74.70 | 0.00  | 60.06  | 50.35      | 59.79         | 62.96   |
-| fastText  | DecisionTree | bdlp v10 | 35.37   | 38.03  | 36.65  | 39.26        | 38.29   | 40.54   | 61.21 | 6.67  | 34.17  | 38.69      | 48.24         | 38.38   |
+embedding = `fastText + dblp v10`, feature = `embedding + cluster + one-hot`
 
+| Model        | Test F1 | micro_f1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| ------------ | ------- | -------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| LinearSVC    | 51.45   | -        | 51.47  | 51.43  | 50.24        | 53.37   | 47.77   | 70.99 | 0.00  | 55.84  | 47.09      | 58.10         | 61.47   |
+| Sklearn LR   | 52.77   | -        | 56.32  | 49.64  | 53.09        | 58.03   | 49.06   | 74.70 | 0.00  | 60.06  | 50.35      | 59.79         | 62.96   |
+| DecisionTree | 36.65   | -        | 35.37  | 38.03  | 39.26        | 38.29   | 40.54   | 61.21 | 6.67  | 34.17  | 38.69      | 48.24         | 38.38   |
+| textCNN      | 51.20   | 65.5     | 54.0   | 48.6   | 51.2         | 54.0    | 48.6    | 78.0  | 0.00  | 61.0   | 54.0       | 54.0          | 56.0    |
 
-`work for feature`
+#### subTask 1.1 feature work
 
-model = 'liblinear LR'
+model = 'liblinear LR', embedding = `fastText + dblp v10`, basic_feature = `embedding`
 
-| feature   | Embedding | Model | Data    | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| --------- | --------- | ----- | ------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| embedding | fastTxt   | LR    | dblpv10 | 52.01   | 64.58  | 43.54  | 49.97        | 55.46   | 46.0    | 71.64 | 0.00  | 54.53  | 46.78      | 57.38         | 54.55   |
-| +one-hot  | fastTxt   | LR    | dblpv10 | 51.43   | 64.54  | 42.7   | 49.25        | 61.23   | 41.28   | 71.64 | 0.00  | 51.21  | 44.85      | 59.25         | 39.17   |
-| +shape    | fastTxt   | LR    | dblpv10 | 50.61   | 64.87  | 41.4   | 49.67        | 61.97   | 41.56   | 71.62 | 0.00  | 51.68  | 45.60      | 59.84         | 39.9    |
-| +cluster  | fastTxt   | LR    | dblpv10 | 51.55   | 64.69  | 42.8   | 49.31        | 61.10   | 41.40   | 71.93 | 0.00  | 50.11  | 45.63      | 59.65         | 39.10   |
-| +e1,e2    | fastTxt   | LR    | dblpv10 | 49.93   | 62.91  | 41.39  | 49.97        | 61.07   | 42.36   | 72.45 | 0.00  | 48.99  | 48.44      | 60.93         | 43.3    |
+| feature   | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| --------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| embedding | 52.01   | 64.58  | 43.54  | 49.97        | 55.46   | 46.0    | 71.64 | 0.00  | 54.53  | 46.78      | 57.38         | 54.55   |
+| +one-hot  | 51.43   | 64.54  | 42.7   | 49.25        | 61.23   | 41.28   | 71.64 | 0.00  | 51.21  | 44.85      | 59.25         | 39.17   |
+| +shape    | 50.61   | 64.87  | 41.4   | 49.67        | 61.97   | 41.56   | 71.62 | 0.00  | 51.68  | 45.60      | 59.84         | 39.9    |
+| +cluster  | 51.55   | 64.69  | 42.8   | 49.31        | 61.10   | 41.40   | 71.93 | 0.00  | 50.11  | 45.63      | 59.65         | 39.10   |
+| +e1,e2    | 49.93   | 62.91  | 41.39  | 49.97        | 61.07   | 42.36   | 72.45 | 0.00  | 48.99  | 48.44      | 60.93         | 43.3    |
 
-model = 'sklearn LR'
+model = 'sklearn LR', embedding = `fastText + dblp v10`, basic_feature = `embedding`
 
-| feature   | Embedding | Model | Data    | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| --------- | --------- | ----- | ------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| embedding | fastTxt   | LR    | dblpv10 | 52.73   | 48.22  | 50.37  | 52.12        | 56.85   | 48.37   | 74.09 | 0.00  | 60.48  | 49.81      | 60.18         | 58.12   |
-| +one-hot  | fastTxt   | LR    | dblpv10 | 53.07   | 49.26  | 51.1   | 52.37        | 57.39   | 48.37   | 74.60 | 0.00  | 60.82  | 50.38      | 60.53         | 57.0    |
-| +shape    | fastTxt   | LR    | dblpv10 | 53.38   | 49.35  | 51.29  | 51.81        | 56.69   | 47.94   | 74.16 | 0.00  | 59.38  | 49.43      | 60.34         | 57.42   |
-| +cluster  | fastTxt   | LR    | dblpv10 | 54.28   | 49.79  | 51.9   | 51.97        | 56.57   | 48.2    | 73.51 | 0.00  | 61.21  | 49.25      | 60.42         | 57.32   |
-| +e1,e2    | fastTxt   | LR    | dblpv10 | 53.34   | 48.71  | 50.92  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
+| feature   | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| --------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| embedding | 50.37   | 52.73  | 48.22  | 52.12        | 56.85   | 48.37   | 74.09 | 0.00  | 60.48  | 49.81      | 60.18         | 58.12   |
+| +one-hot  | 51.1    | 53.07  | 49.26  | 52.37        | 57.39   | 48.37   | 74.60 | 0.00  | 60.82  | 50.38      | 60.53         | 57.0    |
+| +shape    | 51.29   | 53.38  | 49.35  | 51.81        | 56.69   | 47.94   | 74.16 | 0.00  | 59.38  | 49.43      | 60.34         | 57.42   |
+| +cluster  | 51.9    | 54.28  | 49.79  | 51.97        | 56.57   | 48.2    | 73.51 | 0.00  | 61.21  | 49.25      | 60.42         | 57.32   |
+| +e1,e2    | 50.92   | 53.34  | 48.71  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
 
-basic feature = 'embedding + e1 + e2'
+basic feature = 'embedding + e1 + e2', embedding = `fastText + dblp v10`
 
-| feature  | Embedding | Model | Data    | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| -------- | --------- | ----- | ------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| basic    | fastTxt   | LR    | dblpv10 | 53.34   | 48.71  | 50.92  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
-| +one-hot | fastTxt   | LR    | dblpv10 | 52.99   | 46.65  | 49.6   | 52.96        | 57.94   | 48.91   | 74.71 | 0.00  | 60.06  | 50.35      | 59.80         | 62.07   |
-| +shape   | fastTxt   | LR    | dblpv10 | 53.88   | 49.61  | 51.66  | 52.50        | 57.63   | 48.40   | 73.56 | 0.00  | 60.06  | 49.79      | 59.78         | 61.0    |
-| +cluster | fastTxt   | LR    | dblpv10 | 52.03   | 47.01  | 49.39  | 52.60        | 57.18   | 48.86   | 73.82 | 0.00  | 60.79  | 50.23      | 59.97         | 60.72   |
+| feature  | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| -------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| basic    | 50.92   | 53.34  | 48.71  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
+| +one-hot | 49.6    | 52.99  | 46.65  | 52.96        | 57.94   | 48.91   | 74.71 | 0.00  | 60.06  | 50.35      | 59.80         | 62.07   |
+| +shape   | 51.66   | 53.88  | 49.61  | 52.50        | 57.63   | 48.40   | 73.56 | 0.00  | 60.06  | 49.79      | 59.78         | 61.0    |
+| +cluster | 49.39   | 52.03  | 47.01  | 52.60        | 57.18   | 48.86   | 73.82 | 0.00  | 60.79  | 50.23      | 59.97         | 60.72   |
 
-feature = 'embedding + e1 + e2 + one-hot + cluster'
+#### subtask 1.1 imbalance
 
-`classsify unbalanced`
+model=`sklearn LR`, embedding = `fastText + dblp v10`, feature = 'embedding + e1 + e2 + one-hot + cluster'
 
-+subtask1.2
+| feature | Model   | Test macro_F1 | micro_f1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| ------- | ------- | ------------- | -------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| basic   | LR      | 50.92         | 65.17    | 53.34  | 48.71  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
+| +1.2Top | LR      | 50.20         | 64.41    | 54.14  | 47.87  | 52.62        | 49.79   | 50.05   | 60.97 | 9.20  | 46.61  | 46.44      | 51.44         | 55.04   |
+| +Top    | LR      | 50.5          | 68.12    | 53.96  | 47.61  | 46.22        | 50.50   | 42.7    | 57.96 | 13.95 | 46.85  | 39.60      | 45.55         | 47.64   |
+| +Train  | LR      | 53.73         | 71.07    | 56.41  | 51.2   | 67.20        | 71.61   | 63.31   | 75.36 | 85.30 | 67.84  | 53.65      | 56.30         | 60.86   |
+| +Test   | LR      | 52.82         | 68.26    | 56.40  | 49.68  | 66.73        | 71.52   | 62.58   | 75.49 | 80.82 | 64.41  | 56.24      | 58.24         | 59.49   |
+| +All    | LR      | 52.82         | 70.22    | 56.40  | 49.69  | 66.42        | 71.62   | 62.21   | 74.39 | 78.53 | 62.73  | 56.18      | 56.92         | 61.99   |
+| +Train  | TextCNN | 67.741        | 72.033   | 65.775 | 69.829 | 66.626       | 70.990  | 62.767  | 78.44 | 81.67 | 61.86  | 59.50      | 53.45         | 60.00   |
 
-| feature | Embedding | Model | Data    | Test F1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
-| ------- | --------- | ----- | ------- | ------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
-| basic   | fastTxt   | LR    | dblpv10 | 53.34   | 48.71  | 50.92  | 52.99        | 57.52   | 49.29   | 74.35 | 0.00  | 60.25  | 50.98      | 60.13         | 62.4    |
-| +1.2Top | fastTxt   | LR    | dblpv10 | 54.14   | 47.87  | 50.20  | 52.62        | 49.79   | 50.05   | 60.97 | 9.20  | 46.61  | 46.44      | 51.44         | 55.04   |
-| +Top    | fastTxt   | LR    | dblpv10 | 53.96   | 47.61  | 50.5   | 46.22        | 50.50   | 42.7    | 57.96 | 13.95 | 46.85  | 39.60      | 45.55         | 47.64   |
-| +Train  | fastTxt   | LR    | dblpv10 | 55.35   | 49.67  | 52.36  | 62.16        | 66.75   | 58.23   | 75.82 | 56.47 | 62.03  | 55.66      | 54.76         | 61.31   |
-| +Test   | fastTxt   | LR    | dblpv10 | 55.17   | 49.29  | 52.0   | 56.08        | 62.73   | 50.9    | 72.73 | 19.24 | 70.47  | 51.46      | 60.52         | 48.48   |
-| +All    | fastTxt   | LR    | dblpv10 | 55.67   | 50.60  | 53.01  | 63.80        | 68.27   | 59.92   | 76.75 | 61.80 | 64.82  | 58.14      | 59.49         | 54.56   |
+##### subTask 1.1 pad position
 
+model=`textCNN`, data=`1.1+1.2Train`, embedding=`fastText + dblp v10`, feature = `embedding + cluster + one-hot`
+
+| pad            | Test macro_F1 | micro_f1 | Test P | Test R      | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| -------------- | ------------- | -------- | ------ | ----------- | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| front          | 59.742        | 66.947   | 60.849 | 58.674      | 66.984       | 67.840  | 66.149  | 77.21 | 87.50 | 67.72  | 55.81      | 60.09         | 47.62   |
+| behind entity1 | 56.791        | 66.666   | 56.295 | 57.296      | 66.358       | 72.544  | 61.144  | 73.88 | 85.71 | 53.06  | 55.07      | 57.14         | 63.64   |
+| before entity2 | 67.741        | 72.033   | 65.775 | 69.829      | 66.626       | 70.990  | 62.767  | 78.44 | 81.67 | 61.86  | 59.50      | 53.45         | 60.00   |
+| after          | 57.696        | 65.633   | 57.820 | 57.57356.30 | 69.918       | 76.169  | 64.616  | 74.35 | 87.10 | 69.44  | 62.10      | 56.03         | 62.96   |
+
+#### subTask 1.2
+
+##### subTask 1.2 Test
+
+data=`1.2Train`, embedding = `fastText + dblp v10`, feature = `embedding + cluster + one-hot`
+
+| Model        | Test macro_f1 | Test micro_f1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| ------------ | ------------- | ------------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| Sklearn LR   | 75.06         | 76.04         | 81.61  | 69.47  | 66.05        | 72.33   | 60.86   | 79.48 | 90.61 | 59.81  | 64.00      | 50.52         | 35.29   |
+| liblinear LR | 69.15         | 81.41         | 70.42  | 67.93  | 61.36        | 68.23   | 56.03   | 77.91 | 92.02 | 55.28  | 64.72      | 50.84         | 8.00    |
+| LinearSVC    | 70.29         | 75.56         | 71.49  | 69.12  | 63.28        | 66.18   | 60.66   | 78.61 | 90.53 | 58.32  | 61.08      | 49.94         | 33.59   |
+| textCNN      | 77.35         | 80.53         | 84.62  | 71.24  | 68.15        | 75.15   | 62.35   | 81.23 | 95.10 | 74.07  | 72.90      | 71.43         | 0.00    |
+
+#### subTask 1.2 pad Test
+
+model=`textCNN`, data=`1.2+1.1Train`, embedding=`fastText + dblp v10`, feature = `embedding + cluster + one-hot`
+
+| pad            | Test macro_F1 | micro_f1 | Test P | Test R | Train F1 (%) | Train P | Train R | USAGE | TOPIC | RESULT | PART_WHOLE | MODEL-FEATURE | COMPARE |
+| -------------- | ------------- | -------- | ------ | ------ | ------------ | ------- | ------- | ----- | ----- | ------ | ---------- | ------------- | ------- |
+| front          | 71.221        | 77.291   | 74.906 | 67.882 | 64.908       | 69.339  | 61.010  | 76.95 | 81.90 | 68.97  | 57.87      | 57.14         | 37.04   |
+| behind entity1 | 72.768        | 80.790   | 74.359 | 71.244 | 64.224       | 70.335  | 59.089  | 78.48 | 82.64 | 53.52  | 52.22      | 65.17         | 44.90   |
+| before entity2 | 73.032        | 81.012   | 74.235 | 71.868 | 66.158       | 71.011  | 61.925  | 75.69 | 83.72 | 53.33  | 58.94      | 58.46         | 59.02   |
+| after          | 72.477        | 80.225   | 72.889 | 72.069 | 66.853       | 71.084  | 63.098  | 78.71 | 81.74 | 60.98  | 55.34      | 59.42         | 61.02   |
 
 #### Add more feature
 
@@ -551,17 +600,17 @@ topics_entities = [k for k, v in a.items() if v == rela2id['TOPIC']]
 ```
 
 1. ('P01-1009.1', 'P01-1009.3')
-   * Title: Alternative Phrases and Natural Language Information Retrieval
-   * `formal analysis` for a large class of words called `alternative markers`
+   - Title: Alternative Phrases and Natural Language Information Retrieval
+   - `formal analysis` for a large class of words called `alternative markers`
 2. ('N03-1026.14', 'N03-1026.15')
-   * Title: Statistical Sentence Condensation using Ambiguity Packing and Stochastic Disambiguation Methods for Lexical-Functional Grammar
-   * An `experimental evaluation` of `summarization`
+   - Title: Statistical Sentence Condensation using Ambiguity Packing and Stochastic Disambiguation Methods for Lexical-Functional Grammar
+   - An `experimental evaluation` of `summarization`
 3. ('N04-1024.18', 'N04-1024.19')
-   * Title: Evaluating Multiple Aspects of Coherence in Student Essays
-   * `Intra-sentential quality` is evaluated with `rule-based heuristics`
+   - Title: Evaluating Multiple Aspects of Coherence in Student Essays
+   - `Intra-sentential quality` is evaluated with `rule-based heuristics`
 4. ('H01-1055.7', 'H01-1055.9')
-   * Title: Natural Language Generation in Dialog Systems
-   * `system response` to users has been extensively studied by the `natural language generation community`
+   - Title: Natural Language Generation in Dialog Systems
+   - `system response` to users has been extensively studied by the `natural language generation community`
 
 ## Using Deep Learning
 
@@ -647,11 +696,11 @@ import subprocess
 
 ### Get BERT word embedding
 
-* [google-research/bert issues - How to get the word embedding after pre-training?](https://github.com/google-research/bert/issues/60)
-  * with variable name `bert/embeddings/word_embeddings`
-* [imgarylai/bert-embedding](https://github.com/imgarylai/bert-embedding)
-* [Stackoverflow - How do I find the variable names and values that are saved in a checkpoint?](https://stackoverflow.com/questions/38218174/how-do-i-find-the-variable-names-and-values-that-are-saved-in-a-checkpoint/41917296)
-  * [tensorflow/tensorflow - inspect_checkpoint.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/inspect_checkpoint.py)
+- [google-research/bert issues - How to get the word embedding after pre-training?](https://github.com/google-research/bert/issues/60)
+  - with variable name `bert/embeddings/word_embeddings`
+- [imgarylai/bert-embedding](https://github.com/imgarylai/bert-embedding)
+- [Stackoverflow - How do I find the variable names and values that are saved in a checkpoint?](https://stackoverflow.com/questions/38218174/how-do-i-find-the-variable-names-and-values-that-are-saved-in-a-checkpoint/41917296)
+  - [tensorflow/tensorflow - inspect_checkpoint.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/inspect_checkpoint.py)
 
 ```py
 model_path = '.'
@@ -709,8 +758,8 @@ reload(module) # module updated
 
 ### TextCNN
 
-* [brightmart/text_classification](https://github.com/brightmart/text_classification)
-* [DongjunLee/text-cnn-tensorflow](https://github.com/DongjunLee/text-cnn-tensorflow)
+- [brightmart/text_classification](https://github.com/brightmart/text_classification)
+- [DongjunLee/text-cnn-tensorflow](https://github.com/DongjunLee/text-cnn-tensorflow)
 
 ### Data
 
@@ -725,3 +774,7 @@ reload(module) # module updated
 - [SemEval-2018 Task 7: Semantic Relation Extraction and Classification in Scientific Papers](https://aclweb.org/anthology/S18-1111)
 - [LightRel](https://arxiv.org/pdf/1804.08426.pdf)
   - [github](https://github.com/trenslow/LightRel)
+
+### Found Other Team Project
+
+- [nightdessert/semeval2018-task7](https://github.com/nightdessert/semeval2018-task7)
