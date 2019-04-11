@@ -5,12 +5,14 @@ import re
 import random
 import subprocess
 import time
+import urllib3
+import tensorflow as tf
 
 from constant import *
 from bs4 import BeautifulSoup, NavigableString
 from numba import jit
 
-
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 start = []
 
 
@@ -42,15 +44,17 @@ def loadPaper(filename):
 
     for text in texts:
         paper = Paper(text_id=text["id"], title=text.title.text)
-        paper.abstract = text.abstract.text.strip()
+        abstract = text.find_all(re.compile('title|abstract'))
+        paper.abstract = ' '.join([ii.text.strip() for ii in abstract])
 
         abstract_entity = ''
 
-        for abstract_item in text.abstract.contents:
-            try:
-                abstract_entity += str(abstract_item['id'])
-            except:
-                abstract_entity += str(abstract_item)
+        for ii in abstract:
+            for abstract_item in ii.contents:
+                try:
+                    abstract_entity += str(abstract_item['id'])
+                except:
+                    abstract_entity += str(abstract_item)
         paper.abstract_entity = abstract_entity.strip()
 
         entities = text.findAll('entity')
@@ -124,41 +128,46 @@ def getMacroResult(pred_file, key_file):
 
 
 @jit
-def fastF1(result, predict, trueValue):
-    """
-    f1 score
-    """
-    trueNum = 0
-    recallNum = 0
-    precisionNum = 0
-    for index, values in enumerate(result):
-        if values == trueValue:
-            recallNum += 1
-            if values == predict[index]:
-                trueNum += 1
-        if predict[index] == trueValue:
-            precisionNum += 1
-    R = trueNum / recallNum if recallNum else 0
-    P = trueNum / precisionNum if precisionNum else 0
-    f1 = (2 * P * R) / (P + R) if (P + R) else 0
-    print(id2rela[trueValue], P, R, f1)
-    return P, R, f1
-
-
-def scoreSelf(predict, result=None):
-    if result is None:
-        with open('%skeys.test.1.1.txt' % data_dir, 'r') as f:
-            result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
-    p, r = 0, 0
-    for ii in range(6):
-        tp, tr, _ = fastF1(result, predict, ii)
-        p += tp
-        r += tr
+def fastF1(result, predict):
+    ''' f1 score '''
+    true_total, r_total, p_total, p, r = 0, 0, 0, 0, 0
+    total_list = []
+    for trueValue in range(6):
+        trueNum, recallNum, precisionNum = 0, 0, 0
+        for index, values in enumerate(result):
+            if values == trueValue:
+                recallNum += 1
+                if values == predict[index]:
+                    trueNum += 1
+            if predict[index] == trueValue:
+                precisionNum += 1
+        R = trueNum / recallNum if recallNum else 0
+        P = trueNum / precisionNum if precisionNum else 0
+        true_total += trueNum
+        r_total += recallNum
+        p_total += precisionNum
+        p += P
+        r += R
+        f1 = (2 * P * R) / (P + R) if (P + R) else 0
+        print(id2rela[trueValue], P, R, f1)
+        total_list.append([P, R, f1])
     p /= 6
     r /= 6
-    f1 = (2 * p * r) / (p + r) if (p + r) else 0
-    print('Once', p, r, f1)
-    return p, r, f1
+    micro_r = true_total / r_total
+    micro_p = true_total / p_total
+    macro_f1 = (2 * p * r) / (p + r) if (p + r) else 0
+    micro_f1 = (2 * micro_p * micro_r) / (micro_p +
+                                          micro_r) if (micro_p + micro_r) else 0
+    print('P: {:.2f}%, R: {:.2f}%, Micro_f1: {:.2f}%, Macro_f1: {:.2f}%'.format(
+        p*100, r*100, micro_f1 * 100, macro_f1*100))
+    return p, r, macro_f1, micro_f1, total_lists
+
+
+def scoreSelf(predict, result=Nones):
+    if result is None:
+        with open('%skeys.test.1.1.txt' % test_data_path, 'r') as f:
+            result = [rela2id[ii.split('(')[0]] for ii in f.readlines()]
+    return fastF1(result, predict)
 
 
 def begin_time():
@@ -197,6 +206,48 @@ def load_bigger(input_file):
         for _ in range(0, input_size, max_bytes):
             bytes_in += f_in.read(max_bytes)
     return pickle.loads(bytes_in)
+
+
+def load_embedding_from_txt(word2vec_model_name: str, index2word: dict):
+    vocab_size = len(index2word)
+    import word2vec
+    word2vec_model_path = '%s%s.txt' % (embedding_dir, word2vec_model_name)
+    print("using pre-trained word embedding:", word2vec_model_path)
+    embed = word2vec.load(word2vec_model_path, kind='txt')
+    word2vec_dict = {w: v for w, v in zip(embed.vocab, embed.vectors)}
+
+    bound = np.sqrt(6.0) / np.sqrt(vocab_size)
+    word_embedding_list = [word2vec_dict[jj] if jj in word2vec_dict else np.random.uniform(
+        -bound, bound, embedding_dim) for ii, jj in index2word.items()]
+    word_embedding_list[0] = np.zeros(embedding_dim)
+    count_exist = len([1 for ww in index2word.values() if ww in word2vec_dict])
+    count_not_exist = vocab_size - count_exist
+
+    word_embedding_final = np.array(word_embedding_list)
+    embed_dir = '%s%s%s%s.pkl' % (
+        pickle_path, version, imbalance, word2vec_model_name)
+
+    dump_bigger([word_embedding_final, count_exist,
+                 count_not_exist], embed_dir)
+    return word_embedding_final, count_exist, count_not_exist
+
+
+def load_embedding(sess, index2word: dict, W, word2vec_model_name: str):
+    ''' load embedding '''
+    embed_dir = '%s%s.pkl' % (pickle_path, word2vec_model_name)
+    if os.path.exists(embed_dir):
+        word_embedding_final, count_exist, count_not_exist = load_bigger(
+            embed_dir)
+    else:
+        word_embedding_final, count_exist, count_not_exist = load_embedding_from_txt(
+            word2vec_model_name, index2word)
+
+    word_embedding = tf.constant(word_embedding_final, dtype=tf.float32)
+    t_assign_embedding = tf.assign(W, word_embedding)
+    sess.run(t_assign_embedding)
+    print("word. exists embedding:{} ;word not exist embedding: {}".format(
+        count_exist, count_not_exist))
+    print("using pre-trained word embedding.ended...")
 
 
 # Test utilities
