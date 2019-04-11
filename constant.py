@@ -11,6 +11,24 @@ score_script_path = 'data/semeval2018_task7_scorer-v1.2.pl'
 pickle_path = 'pickle/'  # embedding.
 embedding_dir = '../LightRel//SemEval18task7/feature/'
 
+version = '1.1'
+imbalance = 'train'
+train_str = ''
+test_str = '.test'
+key_str = 'keys{}.'.format(test_str)
+data_txt_path = '.relations.txt'
+xml_path = '.text.xml'
+
+common_path = '%s%s%s%s'
+train_data_xml = common_path % (train_data_path, version, train_str, xml_path)
+train_data_txt = common_path % (
+    train_data_path, version, train_str, data_txt_path)
+
+test_data_xml = common_path % (test_data_path, version, test_str, xml_path)
+test_data_txt = common_path % (
+    test_data_path, version, test_str, data_txt_path)
+test_data_key = common_path % (test_data_path, key_str, version, '.txt')
+
 embedding_dim = 300
 
 rela2id = {
