@@ -614,7 +614,12 @@ topics_entities = [k for k, v in a.items() if v == rela2id['TOPIC']]
 
 ## Using Deep Learning
 
-> TODO
+TextCNN, CNN -> BN -> RELU
+
+```sh
+$ python3 text_cnn.py
+$ python3 text_cnn_train.py
+```
 
 ### Learning from the extracted feature
 
@@ -778,3 +783,4 @@ reload(module) # module updated
 ### Found Other Team Project
 
 - [nightdessert/semeval2018-task7](https://github.com/nightdessert/semeval2018-task7)
+  p
